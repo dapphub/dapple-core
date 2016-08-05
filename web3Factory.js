@@ -1,8 +1,10 @@
 'use strict';
 
 var DappleChain = require('dapple-chain');
+var chainModule = require('dapple-chain');
 var utils = require('./utils');
 var Web3 = require('web3');
+var createNewChain = require('dapple-chain/lib/createNewChain.js');
 
 module.exports = {
   JSONRPC: function (opts, cb) {
@@ -58,7 +60,6 @@ module.exports = {
       cb = opts;
     }
     cb = utils.optionalCallback(cb);
-
     var provider = DappleChain.web3Provider(opts);
     var web3;
     provider.manager.blockchain.setGasLimit(900000000);

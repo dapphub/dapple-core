@@ -4,9 +4,13 @@
 
 var Web3Factory = require('./web3Factory.js');
 var deasync = require('deasync');
+var createNewChain = require('dapple-chain/lib/createNewChain.js');
+var levelup = require('levelup');
+var memdown = require('memdown');
 
 const DEFAULT_GAS = 3141592;
 
+// TODO - refactor this to pure chainenv
 class Web3Interface {
 
   constructor (opts, web3) {
@@ -14,7 +18,28 @@ class Web3Interface {
 
     if (web3) {
       this._web3 = web3;
-    } else if (opts.web3 === 'internal') {
+    } else if (opts.chainenv.type === 'internal') {
+      Web3Factory.EVM(opts, (err, web3) => {
+        if (err) throw new Error(err);
+        this._web3 = web3;
+      });
+    } else if (opts.type === 'tmp') {
+      // TODO - in memory database has problems with dapplechain.runBlock
+      // var db = levelup('/tmp', { db: require('memdown') }, (err, db) => {
+      // opts.db = opts.db;
+      var addr = opts.chainenv.defaultAccount;
+      var chaindata = createNewChain(opts.db, [addr]);
+      var chainenv = {
+        branch: true,
+        meta: chaindata.meta,
+        stateRoot: chaindata.stateRoot,
+        fakedOwnership: [addr],
+        defaultAccount: addr,
+        devmode: true,
+        type: "internal"
+      }
+      opts.chainenv = chainenv;
+
       Web3Factory.EVM(opts, (err, web3) => {
         if (err) throw new Error(err);
         this._web3 = web3;
