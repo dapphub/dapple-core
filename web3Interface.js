@@ -15,6 +15,9 @@ class Web3Interface {
 
   constructor (opts, web3) {
     this._gas = DEFAULT_GAS;
+    this.chainenv = opts.chainenv;
+    this.filterCallbacks = [];
+    this.supervisor = opts.supervisor;
 
     if (web3) {
       this._web3 = web3;
@@ -35,10 +38,12 @@ class Web3Interface {
         stateRoot: chaindata.stateRoot,
         fakedOwnership: [addr],
         defaultAccount: addr,
+        env: {},
         devmode: true,
-        type: "internal"
+        type: "internal",
+        confirmationBlocks: 0
       }
-      opts.chainenv = chainenv;
+      this.chainenv = opts.chainenv = chainenv;
 
       Web3Factory.EVM(opts, (err, web3) => {
         if (err) throw new Error(err);
@@ -72,19 +77,22 @@ class Web3Interface {
     return fSync();
   }
 
-  waitForBlock (blockNumber) {
+  waitForBlock (blockNumber, cb) {
     var self = this;
-    var done = false;
-    var _filter = this._web3.eth.filter('latest', function (err, result) {
+    var watch = (err, result) => {
       if (err) {
-        _filter.stopWatching();
-        throw err;
+        this.removeOnBlock(watch);
+        return cb(err);
       }
-      done = self._web3.eth.blockNumber > blockNumber;
-    });
-    deasync.loopWhile(function () { return !done; });
-    _filter.stopWatching();
-    return true;
+      var currentBlockNumber = self._web3.eth.blockNumber;
+      if( currentBlockNumber >= blockNumber ) {
+        this.removeOnBlock(watch);
+        return cb();
+      } else {
+        this.setStatus(`waiting ${blockNumber - currentBlockNumberk} blocks`);
+      }
+    };
+    this.onBlock(watch);
   }
 
   getCode (address) {
@@ -215,6 +223,84 @@ class Web3Interface {
     if (typeof _filter === 'object') _filter.stopWatching();
     return result;
   }
+
+  runFilter () {
+    this._filter = this._web3.eth.filter('latest', (err, res) => {
+      if (err) throw err;
+      this.filterCallbacks.forEach(f => f());
+    });
+  }
+
+  stopFilter () {
+    this._filter.stopWatching();
+  }
+
+  onBlock (f) {
+    if(this.filterCallbacks.indexOf(f) === -1) {
+      this.filterCallbacks.push(f);
+    }
+  }
+
+  removeOnBlock(f) {
+    let num = this.filterCallbacks.indexOf(f);
+    if(num > -1) this.filterCallbacks.splice(num, 1);
+  }
+
+  // @param opts
+  //    co - transaction object
+  tx (co, cb) {
+    var txHash = null;
+    var watch = (err, res) => {
+      if (err) throw err;
+      if (!txHash) return null;
+      getTxReceipt();
+    };
+    var called = false;
+    var getTxReceipt = (installWatcher) => {
+      this._web3.eth.getTransactionReceipt(txHash, (err, _receipt) => {
+        if (err) throw err;
+        if (called) return null;
+        if (!_receipt) {
+          this.setStatus(`waiting for transaction ${txHash} to get included`);
+          if(typeof installWatcher === 'function') installWatcher();
+          return null;
+        }
+        this.setStatus(`${this.chainenv.confirmationBlocks} blocks confirmation left`);
+        this.removeOnBlock(watch);
+        called = true;
+        return cb(null, _receipt); // TODO - ERROR - callback was already called
+      });
+    }
+    this.setStatus('sending transaction');
+    this._web3.eth.sendTransaction(co, (err, hash) => {
+      // TODO - handle error
+      txHash = hash;
+      getTxReceipt(() => {
+        this.onBlock(watch);
+      });
+    });
+  }
+
+  confirmTx(receipt, cb) {
+    if( this.chainenv.confirmationBlocks === 0 ) {
+      cb(null, receipt)
+    } else {
+      this.waitForBlock(receipt.blockNumber + this.chainenv.confirmationBlocks, (err) => {
+        this._web3.eth.getTransactionReceipt(receipt.transactionHash, (err, r2) => {
+          if( r2.blockHash === receipt.blockHash ) {
+            cb(err, receipt);
+          } else {
+            cb(new Error('TODO - block hash differ, renew confirmation'));
+          }
+        });
+      });
+    }
+  }
+
+  setStatus (status) {
+    if(this.supervisor) this.supervisor.setStatus(status);
+  }
+
 }
 
 module.exports = Web3Interface;

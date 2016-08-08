@@ -86,6 +86,7 @@ class State {
       branch: true,
       meta: chaindata.meta,
       stateRoot: chaindata.stateRoot,
+      env: {},
       fakedOwnership: ['0x0000000000000000000000000000000000000000'],
       defaultAccount: '0x0000000000000000000000000000000000000000',
       devmode: true,
