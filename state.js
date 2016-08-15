@@ -7,6 +7,7 @@ var DappleChain = require('dapple-chain/lib/blockchain.js');
 var DapphubInterface = require('dapple-chain/lib/dapphubInterface.js');
 var createNewChain = require('dapple-chain/lib/createNewChain.js');
 var async = require('async');
+var fs = require('./file.js');
 
 class State {
   constructor(cliSpec) {
@@ -38,6 +39,9 @@ class State {
     var rdy = false;
     let localdbPath = path.join(package_root,'.dapple/chain_db');
 
+    if(!fs.existsSync(path.join(package_root, '.dapple'))) {
+      fs.mkdirp(path.join(package_root, '.dapple'));
+    }
     var handleState = (cb, err, state) => {
       if(err && err.type === 'NotFoundError') {
         this.createState();
