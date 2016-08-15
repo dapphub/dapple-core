@@ -8,6 +8,7 @@ var createNewChain = require('dapple-chain/lib/createNewChain.js');
 var chain_expert = require('dapple-chain/lib/chain_expert.js');
 var levelup = require('levelup');
 var memdown = require('memdown');
+var async = require('async');
 
 const DEFAULT_GAS = 3141592;
 
@@ -292,21 +293,21 @@ class Web3Interface {
     });
   }
 
-  confirmTx(receipt, cb) {
-    if( !('confirmationBlocks' in this.chainenv) || this.chainenv.confirmationBlocks === 0 ) {
-      cb(null, receipt);
-    } else {
-      this.waitForBlock(receipt.blockNumber + this.chainenv.confirmationBlocks, (err) => {
-        this._web3.eth.getTransactionReceipt(receipt.transactionHash, (err, r2) => {
-          if( r2.blockHash === receipt.blockHash ) {
-            cb(err, receipt);
-          } else {
-            // TODO - some sort of timeout required here
-            confirmTx(r2, cb);
-          }
-        });
-      });
+  confirmTx(receipt, callback) {
+    var waitForBlock = this.waitForBlock.bind(this, receipt.blockNumber + this.chainenv.confirmationBlocks);
+    var getReceipt = this._web3.eth.getTransactionReceipt.bind(this._web3.eth, receipt.transactionHash);
+    var compareReceipts = (r2, cb) => {
+      if( r2.blockHash === receipt.blockHash ) {
+        cb(null, receipt);
+      } else {
+        this.confirmTx(r2, cb);
+      }
     }
+    async.waterfall([
+      waitForBlock,
+      getReceipt,
+      compareReceipts
+    ], callback);
   }
 
   setStatus (status) {
