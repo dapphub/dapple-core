@@ -25,7 +25,7 @@ ${env.fakedOwnership.join('\n')}\n`;
 uri: ${env.network.host}:${env.network.port}`;
     }
 
-    let context = _.map(env.env, (e, name) => `${name} = ${e.value} :: ${e.type}`)
+    let context = _.map(env.env, (e, name) => `${e.type} ${name} = ${e.value}`)
     .join('\n');
 
     return `Chain: ${state.head}
