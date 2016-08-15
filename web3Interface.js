@@ -301,7 +301,8 @@ class Web3Interface {
           if( r2.blockHash === receipt.blockHash ) {
             cb(err, receipt);
           } else {
-            cb(new Error('TODO - block hash differ, renew confirmation'));
+            // TODO - some sort of timeout required here
+            confirmTx(r2, cb);
           }
         });
       });
@@ -309,7 +310,10 @@ class Web3Interface {
   }
 
   setStatus (status) {
-    if(this.supervisor) this.supervisor.setStatus(status);
+    if(this.supervisor) {
+      this.supervisor.setStatus(status);
+      // throw new Error('supervisor should be here');
+    }
   }
 
   ensureType (type, cb) {
