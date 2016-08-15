@@ -260,37 +260,47 @@ class Web3Interface {
 
   // @param opts
   //    co - transaction object
-  tx (co, cb) {
+  tx (co, callback) {
+    var semaphore = false;
     var txHash = null;
-    var watch = (err, res) => {
-      if (err) throw err;
-      if (!txHash) return null;
-      getTxReceipt();
-    };
-    var called = false;
-    var getTxReceipt = (installWatcher) => {
-      this._web3.eth.getTransactionReceipt(txHash, (err, _receipt) => {
-        if (err) throw err;
-        if (called) return null;
-        if (!_receipt) {
-          this.setStatus(`waiting for transaction ${txHash} to get included`);
-          if(typeof installWatcher === 'function') installWatcher();
-          return null;
-        }
-        this.setStatus(`${this.chainenv.confirmationBlocks} blocks confirmation left`);
-        this.removeOnBlock(watch);
-        called = true;
-        return cb(null, _receipt); // TODO - ERROR - callback was already called
-      });
+    var self = this;
+
+    function handleFirstTxReceipt(receipt, cb) {
+      if(!receipt) {
+        self.onBlock(watch);
+      } else {
+        return callback(null, receipt);
+      }
     }
-    this.setStatus('sending transaction');
-    this._web3.eth.sendTransaction(co, (err, hash) => {
-      if(err) return cb(err);
+
+    var sendTx = this._web3.eth.sendTransaction.bind(this._web3.eth, co);
+    var handleTx = (hash, cb) => {
+      this.setStatus(`waiting for transaction ${hash} to get included`);
       txHash = hash;
-      getTxReceipt(() => {
-        this.onBlock(watch);
+      cb(null, hash);
+    }
+    var getTxReceipt = this._web3.eth.getTransactionReceipt.bind(this._web3.eth);
+
+    function watch() {
+      if(semaphore) return null;
+      semaphore = true;
+      getTxReceipt(txHash, (err, receipt) => {
+        if(!receipt) {
+          semaphore = false;
+        } else {
+          self.removeOnBlock(watch);
+          callback(null, receipt);
+        }
       });
-    });
+    };
+
+    this.setStatus('sending transaction');
+    async.waterfall([
+      sendTx,
+      handleTx,
+      getTxReceipt,
+      handleFirstTxReceipt
+    ]);
   }
 
   confirmTx(receipt, callback) {
