@@ -58,7 +58,7 @@ module.exports = class LogTranslator {
     that.events = _.object(_.map(this.eventsJSON, function (json) {
       var solidityEvent = new SolidityEvent(null, json, null);
       return [
-        '0x'+web3.sha3(web3utils.transformToFullName(json)),
+        web3.sha3(web3utils.transformToFullName(json)),
         {
           decode: solidityEvent.decode.bind(solidityEvent),
           hexTranslators: that._hexTranslatorsFor(json)

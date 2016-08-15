@@ -4,6 +4,7 @@ var userHome = require('user-home');
 var path = require('path');
 var deasync = require('deasync');
 var DappleChain = require('dapple-chain/lib/blockchain.js');
+var DapphubInterface = require('dapple-chain/lib/dapphubInterface.js');
 var createNewChain = require('dapple-chain/lib/createNewChain.js');
 var async = require('async');
 
@@ -55,16 +56,21 @@ class State {
       if(err) throw err;
 
       if( chainenv.type === 'internal' ) {
-        this.chain = new DappleChain({
-          db: this.db,
-          chainenv
-        });
+        this.initChain(chainenv);
       }
       rdy = true;
     });
     deasync.loopWhile(() => {return !rdy; });
 
   }
+
+  initChain (chainenv) {
+    this.chain = new DappleChain({
+      db: this.db,
+      chainenv
+    });
+  }
+
 
   saveState(persistent) {
     // TODO - async
@@ -95,12 +101,17 @@ class State {
     this.saveState(true);
   }
 
-  forkLiveChain (name) {
-    var env = deasync(this.chain.dhInterface.forkLatest.bind(this.chain.dhInterface))();
-    this.state.pointers[name] = env;
-    this.saveState(true);
+  // TODO - diferentiate on chain type - refactr dhInterface
+  forkLiveChain (name, type, callback) {
+    var dhInterface;
+    if(!this.chain) {
+      dhInterface = new DapphubInterface();
+      dhInterface.initDb(this.db);
+    } else {
+      dhInterface = this.chain.dhInterface;
+    }
+    dhInterface.forkLatest(type, callback);
   }
-
 
   getJSON(key, cb) {
     this.globalDb.get(key, {valueEncoding: 'json'}, cb);
@@ -109,7 +120,9 @@ class State {
   registerModule(module) {
     this.modules[module.name] = module;
     let prefixedCommands = module.cliSpec.commands.map(cmd => {
-      cmd.name = module.name + ' ' + cmd.name;
+      if(module.name != 'core') {
+        cmd.name = module.name + ' ' + cmd.name;
+      }
       return cmd;
     });
     // add command line operations to dapples cli

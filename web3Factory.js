@@ -62,7 +62,7 @@ module.exports = {
     cb = utils.optionalCallback(cb);
     var provider = DappleChain.web3Provider(opts);
     var web3;
-    provider.manager.blockchain.setGasLimit(900000000);
+    // provider.manager.blockchain.setGasLimit(900000000);
     web3 = new Web3(provider);
     web3.eth.defaultAccount = provider.manager.blockchain.defaultAccount();
     cb(null, web3);

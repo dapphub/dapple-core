@@ -5,6 +5,7 @@
 var Web3Factory = require('./web3Factory.js');
 var deasync = require('deasync');
 var createNewChain = require('dapple-chain/lib/createNewChain.js');
+var chain_expert = require('dapple-chain/lib/chain_expert.js');
 var levelup = require('levelup');
 var memdown = require('memdown');
 
@@ -30,18 +31,27 @@ class Web3Interface {
       // TODO - in memory database has problems with dapplechain.runBlock
       // var db = levelup('/tmp', { db: require('memdown') }, (err, db) => {
       // opts.db = opts.db;
+      var chainenv;
       var addr = opts.chainenv.defaultAccount;
-      var chaindata = createNewChain(opts.db, [addr]);
-      var chainenv = {
-        branch: true,
-        meta: chaindata.meta,
-        stateRoot: chaindata.stateRoot,
-        fakedOwnership: [addr],
-        defaultAccount: addr,
-        env: {},
-        devmode: true,
-        type: "internal",
-        confirmationBlocks: 0
+      var type = opts.chainenv.type;
+
+      if(type === 'MORDEN' || type === 'ETH' || type === 'ETC') {
+        chainenv = deasync(opts.state.forkLiveChain.bind(opts.state))(null, type);
+        chainenv.defaultAccount = addr;
+        chainenv.fakedOwnership.push(addr);
+      } else {
+        var chaindata = createNewChain(opts.db, [addr]);
+        chainenv = {
+          branch: true,
+          meta: chaindata.meta,
+          stateRoot: chaindata.stateRoot,
+          fakedOwnership: [addr],
+          defaultAccount: addr,
+          env: {},
+          devmode: true,
+          type: "internal",
+          confirmationBlocks: 0
+        }
       }
       this.chainenv = opts.chainenv = chainenv;
 
@@ -84,13 +94,14 @@ class Web3Interface {
         this.removeOnBlock(watch);
         return cb(err);
       }
-      var currentBlockNumber = self._web3.eth.blockNumber;
-      if( currentBlockNumber >= blockNumber ) {
-        this.removeOnBlock(watch);
-        return cb();
-      } else {
-        this.setStatus(`waiting ${blockNumber - currentBlockNumberk} blocks`);
-      }
+      self._web3.eth.getBlockNumber((err, currentBlockNumber) => {
+        if( currentBlockNumber >= blockNumber ) {
+          this.removeOnBlock(watch);
+          return cb();
+        } else {
+          this.setStatus(`waiting ${blockNumber - currentBlockNumber} blocks`);
+        }
+      });
     };
     this.onBlock(watch);
   }
@@ -273,7 +284,7 @@ class Web3Interface {
     }
     this.setStatus('sending transaction');
     this._web3.eth.sendTransaction(co, (err, hash) => {
-      // TODO - handle error
+      if(err) return cb(err);
       txHash = hash;
       getTxReceipt(() => {
         this.onBlock(watch);
@@ -282,8 +293,8 @@ class Web3Interface {
   }
 
   confirmTx(receipt, cb) {
-    if( this.chainenv.confirmationBlocks === 0 ) {
-      cb(null, receipt)
+    if( !('confirmationBlocks' in this.chainenv) || this.chainenv.confirmationBlocks === 0 ) {
+      cb(null, receipt);
     } else {
       this.waitForBlock(receipt.blockNumber + this.chainenv.confirmationBlocks, (err) => {
         this._web3.eth.getTransactionReceipt(receipt.transactionHash, (err, r2) => {
@@ -299,6 +310,13 @@ class Web3Interface {
 
   setStatus (status) {
     if(this.supervisor) this.supervisor.setStatus(status);
+  }
+
+  ensureType (type, cb) {
+    chain_expert.analyze(this._web3, (err, _type) => {
+      if(type === _type) return cb();
+      return cb(new Error(`Chain Type don't match: expected ${type} but got ${_type}`));
+    });
   }
 
 }
