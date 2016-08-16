@@ -55,15 +55,12 @@ module.exports = class LogTranslator {
     that.eventsJSON = _.filter(abi, function (json) {
       return json.type === 'event';
     });
-    that.events = _.object(_.map(this.eventsJSON, function (json) {
+    that.events = _.assign.apply(this, _.map(this.eventsJSON, function (json) {
       var solidityEvent = new SolidityEvent(null, json, null);
-      return [
-        web3.sha3(web3utils.transformToFullName(json)),
-        {
-          decode: solidityEvent.decode.bind(solidityEvent),
-          hexTranslators: that._hexTranslatorsFor(json)
-        }
-      ];
+      return { [web3.sha3(web3utils.transformToFullName(json))]:
+          { decode: solidityEvent.decode.bind(solidityEvent),
+            hexTranslators: that._hexTranslatorsFor(json)}
+            };
     }));
   }
 
@@ -95,8 +92,6 @@ module.exports = class LogTranslator {
 
   _hexTranslatorsFor (json) {
     var numbers = /[0-9]*/g;
-    return _.zipObject(_.map(json.inputs, (input) => [
-      input.name, hexTranslators[json.name] ||
-                  hexTranslators[input.type.replace(numbers, '')]]));
+    return _.assign.apply(this, _.map(json.inputs, (input) => ({[input.name]: hexTranslators[json.name] || hexTranslators[input.type.replace(numbers, '')]})));
   }
 };

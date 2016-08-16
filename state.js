@@ -119,7 +119,7 @@ class State {
   registerModule(module) {
     this.modules[module.name] = module;
     let prefixedCommands = module.cliSpec.commands.map(cmd => {
-      if(module.name != 'core') {
+      if(module.name != 'core' && module.name != cmd.name) {
         cmd.name = module.name + ' ' + cmd.name;
       }
       return cmd;
