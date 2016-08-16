@@ -4,6 +4,7 @@
 
 var Web3Factory = require('./web3Factory.js');
 var deasync = require('deasync');
+var chain = require('dapple-chain');
 var createNewChain = require('dapple-chain/lib/createNewChain.js');
 var chain_expert = require('dapple-chain/lib/chain_expert.js');
 var levelup = require('levelup');
@@ -37,22 +38,11 @@ class Web3Interface {
       var type = opts.chainenv.type;
 
       if(type === 'MORDEN' || type === 'ETH' || type === 'ETC') {
-        chainenv = deasync(opts.state.forkLiveChain.bind(opts.state))(null, type);
+        chainenv = deasync(chain.forkLiveChain.bind(opts.state))(opts.state.db, null, type);
         chainenv.defaultAccount = addr;
         chainenv.fakedOwnership.push(addr);
       } else {
-        var chaindata = createNewChain(opts.db, [addr]);
-        chainenv = {
-          branch: true,
-          meta: chaindata.meta,
-          stateRoot: chaindata.stateRoot,
-          fakedOwnership: [addr],
-          defaultAccount: addr,
-          env: {},
-          devmode: true,
-          type: "internal",
-          confirmationBlocks: 0
-        }
+        chainenv = chain.initNew(opts.db);
       }
       this.chainenv = opts.chainenv = chainenv;
 

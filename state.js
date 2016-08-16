@@ -5,7 +5,7 @@ var path = require('path');
 var deasync = require('deasync');
 var DappleChain = require('dapple-chain/lib/blockchain.js');
 var DapphubInterface = require('dapple-chain/lib/dapphubInterface.js');
-var createNewChain = require('dapple-chain/lib/createNewChain.js');
+var chain = require('dapple-chain');
 var async = require('async');
 var fs = require('./file.js');
 var exporter = require('./export.js');
@@ -92,20 +92,11 @@ class State {
     this.createChain("master");
   }
 
-  // TODO - refactor this to chain
+  // TODO - refactor this to chain?
   createChain (name) {
-    var chaindata = createNewChain(this.db);
+    var chainenv = chain.initNew(this.db);
     this.state.head = name;
-    this.state.pointers[name] = {
-      branch: true,
-      meta: chaindata.meta,
-      stateRoot: chaindata.stateRoot,
-      env: {},
-      fakedOwnership: ['0x0000000000000000000000000000000000000000'],
-      defaultAccount: '0x0000000000000000000000000000000000000000',
-      devmode: true,
-      type: "internal"
-    };
+    this.state.pointers[name] = chainenv;
     this.saveState(true);
   }
 
