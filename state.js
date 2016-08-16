@@ -8,6 +8,7 @@ var DapphubInterface = require('dapple-chain/lib/dapphubInterface.js');
 var createNewChain = require('dapple-chain/lib/createNewChain.js');
 var async = require('async');
 var fs = require('./file.js');
+var exporter = require('./export.js');
 
 class State {
   constructor(cliSpec) {
@@ -75,6 +76,9 @@ class State {
     });
   }
 
+  exportEnvironment () {
+    exporter.environment(this);
+  }
 
   saveState(persistent) {
     // TODO - async

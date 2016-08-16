@@ -5,6 +5,12 @@
       "options": [],
       "summary": "print the current status of the chain",
       "help": ""
+    },
+    {
+      "name": "export",
+      "options": [],
+      "summary": "export environment",
+      "help": ""
     }
   ]
 }

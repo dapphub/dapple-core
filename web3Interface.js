@@ -260,6 +260,9 @@ class Web3Interface {
 
   // @param opts
   //    co - transaction object
+  // TODO - refactor without semaphore with purely recursion
+  // onBlock can be refactored to destroy it self after each block call
+  // and getTxReceipt to register it again if no receipt is found
   tx (co, callback) {
     var semaphore = false;
     var txHash = null;
