@@ -9,6 +9,8 @@ var chain = require('dapple-chain');
 var async = require('async');
 var fs = require('./file.js');
 var exporter = require('./export.js');
+var _ = require('lodash');
+var Web3 = require('web3');
 
 class State {
   constructor(cliSpec) {
@@ -134,6 +136,33 @@ class State {
       this.globalDb.put('networks', networks, {valueEncoding: 'json'}, cb);
     });
   }
+
+  getRemoteWeb3(type, callback) {
+
+    // See if the chain is online
+    function pingChain(chainenv, cb) {
+      var web3 = new Web3(new Web3.providers.HttpProvider(`http://${chainenv.network.host}:${chainenv.network.port}`));
+      if(web3.isConnected()) {cb(null, web3, chainenv)}
+    }
+    // see if the defaultAccount has enough balance to proceed the transaction
+    function getBalance(web3, chainenv, cb) {cb(null, web3, chainenv);}
+    // see if the defaultAccount is actually unlocked
+    function testUnlocked(web3, chainenv, cb) {cb(null, web3, chainenv);}
+
+    // go and get all chains of the desired type:
+    var filterType = chainenv => chainenv.type === type;
+    // build tasklist - try to find an accessable chain
+    var candidates = _.filter(this.state.pointers, filterType)
+    .map(chainenv => async.waterfall.bind(async, [
+      pingChain.bind(this, chainenv),
+      getBalance,
+      testUnlocked
+    ]));
+
+    // as fast as it can
+    async.race(candidates, callback);
+  }
+
 
 }
 State.singleton = null;

@@ -38,7 +38,7 @@ class Web3Interface {
       var type = opts.chainenv.type;
 
       if(type === 'MORDEN' || type === 'ETH' || type === 'ETC') {
-        chainenv = deasync(chain.forkLiveChain.bind(opts.state))(opts.state.db, null, type);
+        chainenv = deasync(chain.forkLiveChain.bind(opts.state))(opts.state.db, type);
         chainenv.defaultAccount = addr;
         chainenv.fakedOwnership.push(addr);
       } else {
@@ -107,7 +107,8 @@ class Web3Interface {
         cb(null, res);
       });
     });
-    return fSync();
+    var code = fSync();
+    return code;
   }
 
   confirmCode (address) {
@@ -293,7 +294,9 @@ class Web3Interface {
       handleTx,
       getTxReceipt,
       handleFirstTxReceipt
-    ]);
+    ], (err, res) => {
+      if(err) callback(err);
+    });
   }
 
   confirmTx(receipt, callback) {
