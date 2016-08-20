@@ -42,13 +42,12 @@ class State {
   initWorkspace( workspace ) {
     this.initLocalDb( workspace.package_root );
     this.workspace = workspace;
-    // TODO - enabje this
-    // this.initEnvironments(workspace.dappfile.environments);
+    this.initEnvironments(workspace.dappfile.environments);
   }
 
   initEnvironments (environments) {
     _.each(environments, (env, name) => {
-      _.assign( this.state.pointers[name].env, env);
+      this.state.pointers[name].env = env.objects;
     });
   }
 
