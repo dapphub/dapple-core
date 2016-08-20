@@ -88,19 +88,20 @@ module.exports = {
               }
               // Map context - objects
               if('objects' in e) {
-                return {
-                  type: state.state.pointers[name].type,
-                  objects: _.mapValues( e.objects, o => ({
+                var values = _.mapValues( e.objects, o => ({
                     type: o.class,
                     value: o.address
-                  }))
+                  }));
+                  _.assign(state.state.pointers[name].env, values);
+                return {
+                  type: state.state.pointers[name].type,
+                  objects: values
                 };
               } else {
                 return {};
               }
             })
           fs.renameSync('dappfile', 'dappfile.old');
-          fs.writeYamlSync('./Dappfile', dappfile);
         }
     }
     state.saveState(true);
