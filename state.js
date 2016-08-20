@@ -11,6 +11,7 @@ var fs = require('./file.js');
 var exporter = require('./export.js');
 var _ = require('lodash');
 var Web3 = require('web3');
+var migrate = require('./migrate.js');
 
 class State {
   constructor(cliSpec) {
@@ -36,6 +37,19 @@ class State {
       });
     });
     deasync.loopWhile(() => { return !rdy; });
+  }
+
+  initWorkspace( workspace ) {
+    this.initLocalDb( workspace.package_root );
+    this.workspace = workspace;
+    // TODO - enabje this
+    // this.initEnvironments(workspace.dappfile.environments);
+  }
+
+  initEnvironments (environments) {
+    _.each(environments, (env, name) => {
+      _.assign( this.state.pointers[name].env, env);
+    });
   }
 
   initLocalDb(package_root) {
@@ -85,9 +99,11 @@ class State {
   saveState(persistent) {
     // TODO - async
     if(this.mode === 'persistent' || persistent) {
-      this.workspace.dappfile.environments =
-        _.mapValues(this.state.pointers, p => ({objects: p.env, type: p.type}) );
-      this.workspace.writeDappfile();
+      if(this.workspace) {
+        this.workspace.dappfile.environments =
+          _.mapValues(this.state.pointers, p => ({objects: p.env||{}, type: p.type}) );
+        this.workspace.writeDappfile();
+      }
       deasync(this.db.put).apply(this.db, ['state', this.state, {valueEncoding: 'json'}]);
     }
   }
@@ -117,6 +133,7 @@ class State {
     dhInterface.forkLatest(type, callback);
   }
 
+  // Returns a json object out of the global database
   getJSON(key, cb) {
     this.globalDb.get(key, {valueEncoding: 'json'}, cb);
   }
@@ -167,27 +184,7 @@ class State {
   }
 
   migrate() {
-    // TODO - migrate dapplerc
-    if(fs.existsSync('dappfile')) {
-      let dappfile = fs.readYamlSync('dappfile');
-        if('environments' in dappfile) {
-          dappfile.environments =
-            _.mapValues( dappfile.environments, e => {
-              if('objects' in e) {
-                return {
-                  objects: _.mapValues( e.objects, o => ({
-                    type: o.class,
-                    value: o.address
-                  }))
-                };
-              } else {
-                return {};
-              }
-            })
-        }
-      fs.unlinkSync('dappfile');
-      fs.writeYamlSync('./Dappfile', dappfile);
-    }
+    migrate.handler(this);
   }
 
 
