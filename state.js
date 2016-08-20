@@ -86,7 +86,7 @@ class State {
     // TODO - async
     if(this.mode === 'persistent' || persistent) {
       this.workspace.dappfile.environments =
-        _.mapValues(this.state.pointers, p => ({ctx: p.env, type: p.type}) );
+        _.mapValues(this.state.pointers, p => ({objects: p.env, type: p.type}) );
       this.workspace.writeDappfile();
       deasync(this.db.put).apply(this.db, ['state', this.state, {valueEncoding: 'json'}]);
     }
@@ -164,10 +164,30 @@ class State {
 
     // as fast as it can
     async.race(candidates, callback);
-  } 
+  }
 
   migrate() {
-    
+    // TODO - migrate dapplerc
+    if(fs.existsSync('dappfile')) {
+      let dappfile = fs.readYamlSync('dappfile');
+        if('environments' in dappfile) {
+          dappfile.environments =
+            _.mapValues( dappfile.environments, e => {
+              if('objects' in e) {
+                return {
+                  objects: _.mapValues( e.objects, o => ({
+                    type: o.class,
+                    value: o.address
+                  }))
+                };
+              } else {
+                return {};
+              }
+            })
+        }
+      fs.unlinkSync('dappfile');
+      fs.writeYamlSync('./Dappfile', dappfile);
+    }
   }
 
 
