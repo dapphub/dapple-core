@@ -85,6 +85,9 @@ class State {
   saveState(persistent) {
     // TODO - async
     if(this.mode === 'persistent' || persistent) {
+      this.workspace.dappfile.environments =
+        _.mapValues(this.state.pointers, p => ({ctx: p.env, type: p.type}) );
+      this.workspace.writeDappfile();
       deasync(this.db.put).apply(this.db, ['state', this.state, {valueEncoding: 'json'}]);
     }
   }
@@ -161,6 +164,10 @@ class State {
 
     // as fast as it can
     async.race(candidates, callback);
+  } 
+
+  migrate() {
+    
   }
 
 

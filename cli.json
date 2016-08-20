@@ -11,6 +11,12 @@
       "options": [],
       "summary": "export environment",
       "help": ""
+    },
+    {
+      "name": "migrate",
+      "options": [],
+      "summary": "migrate 0.7 projects to 0.8+ projects",
+      "help": ""
     }
   ]
 }
