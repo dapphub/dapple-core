@@ -8,7 +8,6 @@ var chain = require('dapple-chain');
 var createNewChain = require('dapple-chain/lib/createNewChain.js');
 var chain_expert = require('dapple-chain/lib/chain_expert.js');
 var levelup = require('levelup');
-var memdown = require('memdown');
 var async = require('async');
 
 const DEFAULT_GAS = 3141592;
