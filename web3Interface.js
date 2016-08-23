@@ -39,11 +39,11 @@ class Web3Interface {
 
       if(type === 'MORDEN' || type === 'ETH' || type === 'ETC') {
         chainenv = deasync(chain.forkLiveChain.bind(opts.state))(opts.state.db, type);
-        chainenv.defaultAccount = addr;
-        chainenv.fakedOwnership.push(addr);
       } else {
         chainenv = chain.initNew(opts.db);
       }
+      chainenv.defaultAccount = addr;
+      chainenv.fakedOwnership.push(addr);
       this.chainenv = opts.chainenv = chainenv;
 
       Web3Factory.EVM(opts, (err, web3) => {
