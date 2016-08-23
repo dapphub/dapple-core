@@ -2,7 +2,7 @@
 var levelup = require('levelup');
 var userHome = require('user-home');
 var path = require('path');
-var deasync = require('deasync');
+// TODO - make dappleChain loading asynchronous or initialize it back with a callback
 var DappleChain = require('dapple-chain/lib/blockchain.js');
 var DapphubInterface = require('dapple-chain/lib/dapphubInterface.js');
 var chain = require('dapple-chain');
@@ -14,7 +14,7 @@ var Web3 = require('web3');
 var migrate = require('./migrate.js');
 
 class State {
-  constructor(cliSpec) {
+  constructor(cliSpec, cb) {
     if(State.singleton) return State.singleton;
     State.singleton = this;
     this.modules = {};
@@ -29,29 +29,32 @@ class State {
             {key: "state", value: {}},
             {key: "networks", value: {}}
           ], {valueEncoding: 'json'}, () => {
-            rdy = true;
+            cb(null, this);
           });
         } else {
-          rdy = true;
+          cb(null, this);
         }
       });
     });
-    deasync.loopWhile(() => { return !rdy; });
   }
 
-  initWorkspace( workspace ) {
-    this.initLocalDb( workspace.package_root );
-    this.workspace = workspace;
-    this.initEnvironments(workspace.dappfile.environments);
+  initWorkspace( workspace, cb ) {
+    this.initLocalDb( workspace.package_root, () => {
+      this.workspace = workspace;
+      this.initEnvironments(workspace.dappfile.environments);
+      cb();
+    });
   }
 
   initEnvironments (environments) {
     _.each(environments, (env, name) => {
-      this.state.pointers[name].env = env.objects;
+      if(name in this.state.pointers) {
+        this.state.pointers[name].env = env.objects;
+      }
     });
   }
 
-  initLocalDb(package_root) {
+  initLocalDb(package_root, cb) {
     var rdy = false;
     let localdbPath = path.join(package_root,'.dapple/chain_db');
 
@@ -78,10 +81,8 @@ class State {
       if( chainenv.type === 'internal' ) {
         this.initChain(chainenv);
       }
-      rdy = true;
+      cb( null, this);
     });
-    deasync.loopWhile(() => {return !rdy; });
-
   }
 
   initChain (chainenv) {
@@ -103,7 +104,7 @@ class State {
           _.mapValues(this.state.pointers, p => ({objects: p.env||{}, type: p.type}) );
         this.workspace.writeDappfile();
       }
-      deasync(this.db.put).apply(this.db, ['state', this.state, {valueEncoding: 'json'}]);
+      this.db.put('state', this.state, {valueEncoding: 'json'});
     }
   }
 
