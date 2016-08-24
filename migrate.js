@@ -19,6 +19,7 @@ function analyzeRemoteChain(uri, name, callback) {
     var web3 = new Web3(new Web3.providers.HttpProvider(`http://${uri.host}:${uri.port}`));
     return new Promise((resolve, reject) => {
       chain_expert.analyze(web3, (err, _type) => {
+        console.log(_type);
         type = _type;
         if(err) return reject(err);
         web3.eth.getAccounts((err, accounts) => {
@@ -76,14 +77,26 @@ module.exports = {
       console.log('cannot find dapplerc');
     }
 
-    if(fs.existsSync('dappfile')) {
+    function fileExistsWithCaseSync(filepath) {
+      var dir = path.dirname(filepath);
+      if (dir === '/' || dir === '.') return true;
+      var filenames = fs.readdirSync(dir);
+      if (filenames.indexOf(path.basename(filepath)) === - 1) {
+        return false;
+      }
+      return fileExistsWithCaseSync(dir);
+    }
+
+    if(fileExistsWithCaseSync(process.cwd()+'/dappfile')) {
       let dappfile = fs.readYamlSync('dappfile');
         if('environments' in dappfile) {
           dappfile.environments =
             _.mapValues( dappfile.environments, (e, name) => {
-              if( name in envs && !(name in state.state.pointers)) {
+              if(typeof e !== 'object') return null;
+              var unknownChain = !(name in state.state.pointers && state.state.pointers[name].type !== 'UNKNOWN');
+              if( name in envs && unknownChain) {
                 state.state.pointers[name] = _.clone(envs[name])
-              } else if(!(name in state.state.pointers) && !(name in envs)) {
+              } else if(unknownChain && !(name in envs)) {
                 state.state.pointers[name] = deasync(newChain)({name}, state).chainenv;
               }
               // Map context - objects
@@ -104,6 +117,8 @@ module.exports = {
           fs.renameSync('dappfile', 'dappfile.old');
         }
     }
+    if(fs.existsSync('dapple_packages')) fs.renameSync('dapple_packages', '.dapple/packages')
+    state.workspace.dappfile.layout.packages_directory = '.dapple/packages';
     state.saveState(true);
   }
 }
