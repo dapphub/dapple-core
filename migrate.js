@@ -57,10 +57,21 @@ module.exports = {
   handler: function (state) {
     var dapplercPath = path.join(userHome, '.dapplerc');
     // migrate dapplerc
-    if(fs.existsSync(dapplercPath)) {
+    if(!fs.existsSync(dapplercPath)) {
+      console.log('cannot find dapplerc, aborting!');
+      process.exit();
+    }
+
+    state.getJSON('networks', (err, networks) => {
+
       let dapplerc = fs.readYamlSync(dapplercPath);
+
+      let ported = _.pick(dapplerc.environments, Object.keys(networks));
+
+      let toPort = _.omit(dapplerc.environments, Object.keys(networks));
+
       // TODO - filter values which are already in the global db
-      var tasks = _.mapValues(dapplerc.environments, (env, name) => {
+      var tasks = _.mapValues(toPort, (env, name) => {
         if(env.ethereum === 'internal') {
           return 'internal';
         }
@@ -70,54 +81,61 @@ module.exports = {
         };
         return uri;
       });
+
       // TODO - extend the env object with values from the global db if they exist
-      var envs = deasync(async.mapValuesSeries.bind(async))(tasks, analyzeRemoteChain);
-    } else {
-      console.log('cannot find dapplerc');
-    }
+      async.mapValuesSeries(tasks, analyzeRemoteChain, (err, envs) => {
 
-    function fileExistsWithCaseSync(filepath) {
-      var dir = path.dirname(filepath);
-      if (dir === '/' || dir === '.') return true;
-      var filenames = fs.readdirSync(dir);
-      if (filenames.indexOf(path.basename(filepath)) === - 1) {
-        return false;
-      }
-      return fileExistsWithCaseSync(dir);
-    }
+        var _toAddTasks = _.map(envs, (chainenv, name) => {
+          return (cb) => { state.addNetwork({name, chainenv}, cb); }
+        });
 
-    if(fileExistsWithCaseSync(process.cwd()+'/dappfile')) {
-      let dappfile = fs.readYamlSync('dappfile');
-        if('environments' in dappfile) {
-          dappfile.environments =
-            _.mapValues( dappfile.environments, (e, name) => {
-              if(typeof e !== 'object') return null;
-              var unknownChain = !(name in state.state.pointers && state.state.pointers[name].type !== 'UNKNOWN');
-              if( name in envs && unknownChain) {
-                state.state.pointers[name] = _.clone(envs[name])
-              } else if(unknownChain && !(name in envs)) {
-                state.state.pointers[name] = deasync(newChain)({name}, state).chainenv;
-              }
-              // Map context - objects
-              if('objects' in e) {
-                var values = _.mapValues( e.objects, o => ({
-                    type: o.class,
-                    value: o.address
-                  }));
-                  _.assign(state.state.pointers[name].env, values);
-                return {
-                  type: state.state.pointers[name].type,
-                  objects: values
-                };
-              } else {
-                return {};
-              }
-            })
-          fs.renameSync('dappfile', 'dappfile.old');
-        }
-    }
-    if(fs.existsSync('dapple_packages')) fs.renameSync('dapple_packages', '.dapple/packages')
-    state.workspace.dappfile.layout.packages_directory = '.dapple/packages';
-    state.saveState(true);
+        async.series(_toAddTasks, () => {
+          _.assign(envs, ported);
+          function fileExistsWithCaseSync(filepath) {
+            var dir = path.dirname(filepath);
+            if (dir === '/' || dir === '.') return true;
+            var filenames = fs.readdirSync(dir);
+            if (filenames.indexOf(path.basename(filepath)) === - 1) {
+              return false;
+            }
+            return fileExistsWithCaseSync(dir);
+          }
+
+          if(fileExistsWithCaseSync(process.cwd()+'/dappfile')) {
+            let dappfile = fs.readYamlSync('dappfile');
+            if('environments' in dappfile) {
+              dappfile.environments =
+                _.mapValues( dappfile.environments, (e, name) => {
+                  if(typeof e !== 'object') return null;
+                  var unknownChain = !(name in state.state.pointers && state.state.pointers[name].type !== 'UNKNOWN');
+                  if( name in envs && unknownChain) {
+                    state.state.pointers[name] = _.clone(envs[name])
+                  } else if(unknownChain && !(name in envs)) {
+                    state.state.pointers[name] = deasync(newChain)({name}, state).chainenv;
+                  }
+                  // Map context - objects
+                  if('objects' in e) {
+                    var values = _.mapValues( e.objects, o => ({
+                      type: o.class,
+                      value: o.address
+                    }));
+                    _.assign(state.state.pointers[name].env, values);
+                    return {
+                      type: state.state.pointers[name].type,
+                      objects: values
+                    };
+                  } else {
+                    return {};
+                  }
+                })
+                fs.renameSync('dappfile', 'dappfile.old');
+            }
+          }
+          if(fs.existsSync('dapple_packages')) fs.renameSync('dapple_packages', '.dapple/packages')
+            state.workspace.dappfile.layout.packages_directory = '.dapple/packages';
+          state.saveState(true);
+        });
+      });
+    });
   }
 }

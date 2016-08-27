@@ -153,9 +153,9 @@ class State {
     this.cliSpec.commands = this.cliSpec.commands.concat(prefixedCommands);
   }
 
-  addNetwork(name, obj, cb) {
+  addNetwork(obj, cb) {
     this.globalDb.get('networks', {valueEncoding: 'json'}, (err, networks) => {
-      networks[name] = obj;
+      networks[obj.name] = obj.chainenv;
       this.globalDb.put('networks', networks, {valueEncoding: 'json'}, cb);
     });
   }
