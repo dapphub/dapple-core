@@ -7,7 +7,6 @@ var chain = require('dapple-chain');
 var createNewChain = require('dapple-chain/lib/createNewChain.js');
 var chain_expert = require('dapple-chain/lib/chain_expert.js');
 var levelup = require('levelup');
-var memdown = require('memdown');
 var async = require('async');
 
 const DEFAULT_GAS = 3141592;
@@ -50,11 +49,8 @@ class Web3Interface {
           cb(null, opts);
         });
       } else {
-        console.log('.');
         tasks.push( (cb) => {
-          console.log(0);
           this.chainenv = chain.initNew(opts.db);
-          console.log(1);
           opts.chainenv = this.chainenv;
           cb(null, opts);
         });
@@ -63,10 +59,9 @@ class Web3Interface {
       tasks.push(Web3Factory.EVM.bind(Web3Factory));
 
       async.waterfall(tasks, (err, web3) => {
-        console.log('..');
         if(err) return cb(err);
         this._web3 = web3;
-        cb(null, web3);
+        cb(null, this);
       });
 
     } else {
@@ -301,6 +296,12 @@ class Web3Interface {
     chain_expert.analyze(this._web3, (err, _type) => {
       if(type === _type) return cb();
       return cb(new Error(`Chain Type don't match: expected ${type} but got ${_type}`));
+    });
+  }
+
+  getCode(address, cb) {
+    this._web3.eth.getCode(address, 'latest', (err, res) => {
+      cb(err, res);
     });
   }
 

@@ -50,6 +50,9 @@ class State {
     _.each(environments, (env, name) => {
       if(name in this.state.pointers) {
         this.state.pointers[name].env = env.objects;
+      } else {
+        this.state.pointers[name] = {env: env.objects, type: "UNKNOWN"};
+        console.log(`WARN: you seem to have no chain named ${name}!`);
       }
     });
   }

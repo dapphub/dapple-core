@@ -62,14 +62,11 @@ module.exports = {
     cb = utils.optionalCallback(cb);
     var provider = DappleChain.web3Provider(opts);
     var web3;
-    console.log("web3Factory EVM pre manager waitForInitialization call");
-    // provider.manager.waitForInitialization( (err, bs) => {
-    //   // provider.manager.blockchain.setGasLimit(900000000);
-    //   console.log("web3Factory EVM POST manager waitForInitialization call");
-    //   web3 = new Web3(provider);
-    //   console.log(err, bs);
-    //   web3.eth.defaultAccount = provider.manager.blockchain.defaultAccount();
-    //   cb(null, web3);
-    // });
+    provider.manager.waitForInitialization( (err, bs) => {
+      // provider.manager.blockchain.setGasLimit(900000000);
+      web3 = new Web3(provider);
+      web3.eth.defaultAccount = provider.manager.blockchain.defaultAccount();
+      cb(null, web3);
+    });
   }
 };
