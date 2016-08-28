@@ -19,30 +19,36 @@ class State {
     State.singleton = this;
     this.modules = {};
     this.cliSpec = cliSpec;
-    var rdy = false;
     // Setup dapple if this is the first run
-    this.globalDb = levelup(path.join(userHome, '.dapple'), (err, res) => {
-      if(err) throw err;
-      this.globalDb.get('state', (err, res) => {
+  }
+
+  initWorkspace( workspace, callback ) {
+    var initGlobalDb = levelup.bind(this, path.join(userHome, '.dapple'));
+    var initGlobalState = (globalDb, cb) => {
+      this.globalDb = globalDb;
+      globalDb.get('state', (err, res) => {
         if(err && err.type === 'NotFoundError') {
-          this.globalDb.batch([
+          globalDb.batch([
             {key: "state", value: {}},
             {key: "networks", value: {}}
           ], {valueEncoding: 'json'}, () => {
-            cb(null, this);
+            cb();
           });
         } else {
-          cb(null, this);
+          cb();
         }
       });
-    });
-  }
-
-  initWorkspace( workspace, cb ) {
-    this.initLocalDb( workspace.package_root, () => {
+    };
+    var initLocalDb = this.initLocalDb.bind(this, workspace.package_root);
+    async.waterfall([
+      initGlobalDb,
+      initGlobalState,
+      initLocalDb
+    ], (err) => {
+      if(err) throw new Error(err);
       this.workspace = workspace;
       this.initEnvironments(workspace.dappfile.environments);
-      cb();
+      callback();
     });
   }
 
@@ -58,7 +64,6 @@ class State {
   }
 
   initLocalDb(package_root, cb) {
-    var rdy = false;
     let localdbPath = path.join(package_root,'.dapple/chain_db');
 
     if(!fs.existsSync(path.join(package_root, '.dapple'))) {
