@@ -70,7 +70,6 @@ module.exports = {
 
       let toPort = _.omit(dapplerc.environments, Object.keys(networks));
 
-      // TODO - filter values which are already in the global db
       var tasks = _.mapValues(toPort, (env, name) => {
         if(env.ethereum === 'internal') {
           return 'internal';
@@ -82,6 +81,9 @@ module.exports = {
         return uri;
       });
 
+      // Ommit migrateion of internal environments
+      tasks = _.omitBy(tasks, v => v === 'internal');
+
       // TODO - extend the env object with values from the global db if they exist
       async.mapValuesSeries(tasks, analyzeRemoteChain, (err, envs) => {
 
@@ -90,7 +92,7 @@ module.exports = {
         });
 
         async.series(_toAddTasks, () => {
-          _.assign(envs, ported);
+          _.assign(envs, networks);
           function fileExistsWithCaseSync(filepath) {
             var dir = path.dirname(filepath);
             if (dir === '/' || dir === '.') return true;
@@ -102,16 +104,18 @@ module.exports = {
           }
 
           if(fileExistsWithCaseSync(process.cwd()+'/dappfile')) {
-            let dappfile = fs.readYamlSync('dappfile');
+            var dappfile = fs.readYamlSync('dappfile');
             if('environments' in dappfile) {
               dappfile.environments =
                 _.mapValues( dappfile.environments, (e, name) => {
                   if(typeof e !== 'object') return null;
-                  var unknownChain = !(name in state.state.pointers && state.state.pointers[name].type !== 'UNKNOWN');
+
+                  var unknownChain = !(name in envs && envs[name].type !== 'UNKNOWN');
+
                   if( name in envs && unknownChain) {
-                    state.state.pointers[name] = _.clone(envs[name])
+                    envs[name] = _.clone(envs[name])
                   } else if(unknownChain && !(name in envs)) {
-                    state.state.pointers[name] = deasync(newChain)({name}, state).chainenv;
+                    envs[name] = deasync(newChain)({name}, state).chainenv;
                   }
                   // Map context - objects
                   if('objects' in e) {
@@ -119,16 +123,19 @@ module.exports = {
                       type: o.class,
                       value: o.address
                     }));
-                    _.assign(state.state.pointers[name].env, values);
+                    _.assign(envs[name].env, values);
                     return {
-                      type: state.state.pointers[name].type,
+                      type: envs[name].type,
                       objects: values
                     };
                   } else {
                     return {};
                   }
                 })
-                fs.renameSync('dappfile', 'dappfile.old');
+              fs.renameSync('dappfile', 'dappfile.old');
+              // state.state.env = dappfile.environments;
+              state.state.pointers = _.mapValues(dappfile.environments, env => ({env: env.objects, type: env.type}));
+              state.state.head = Object.keys(state.state.pointers)[0];
             }
           }
           if(fs.existsSync('dapple_packages')) fs.renameSync('dapple_packages', '.dapple/packages')
