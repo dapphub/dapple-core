@@ -8,6 +8,7 @@ var userHome = require('user-home');
 var path = require('path');
 var Web3 = require('web3');
 var deasync = require('deasync');
+var clc = require('cli-color-tty')(true);
 
 function analyzeRemoteChain(uri, name, callback) {
   var type;
@@ -138,7 +139,10 @@ module.exports = {
               state.state.head = Object.keys(state.state.pointers)[0];
             }
           }
-          if(fs.existsSync('dapple_packages')) fs.renameSync('dapple_packages', '.dapple/packages')
+          if(fs.existsSync('dapple_packages')) {
+            fs.renameSync('dapple_packages', '.dapple/packages');
+            console.log(clc.yellowBright('WARN:') + `You have packages installed. Note that Dapple is incompatible with pre 0.8 packages. Please mirate your subpackages first!`);
+          }
             state.workspace.dappfile.layout.packages_directory = '.dapple/packages';
           state.saveState(true);
         });
