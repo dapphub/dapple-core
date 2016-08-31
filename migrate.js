@@ -135,7 +135,8 @@ module.exports = {
                 })
               fs.renameSync('dappfile', 'dappfile.old');
               // state.state.env = dappfile.environments;
-              state.state.pointers = _.mapValues(dappfile.environments, env => ({env: env.objects, type: env.type}));
+              state.state.pointers = _.pickBy(envs, (env, name) => name in dappfile.environments);
+              // state.state.pointers = _.mapValues(dappfile.environments, env => ({env: env.objects, type: env.type}));
               state.state.head = Object.keys(state.state.pointers)[0];
             }
           }
