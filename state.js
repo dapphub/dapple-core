@@ -24,24 +24,22 @@ class State {
 
   initWorkspace( workspace, callback ) {
     var initGlobalDb = levelup.bind(this, path.join(userHome, '.dapple'));
-    var initGlobalState = (globalDb, cb) => {
-      this.globalDb = globalDb;
-      globalDb.get('state', (err, res) => {
-        if(err && err.type === 'NotFoundError') {
-          globalDb.batch([
-            {key: "state", value: {}},
-            {key: "networks", value: {}}
-          ], {valueEncoding: 'json'}, () => {
-            cb();
-          });
-        } else {
-          cb();
-        }
-      });
+    var initGlobalState = (cb) => {
+      this._global_state = {
+        networks: {},
+        state: {}
+      };
+      if(!fs.existsSync(path.join(userHome, '.dapple', 'config'))) {
+        fs.mkdirp(path.join(userHome, '.dapple'));
+        fs.writeFileSync(path.join(userHome, '.dapple', 'config'), JSON.stringify(this._global_state, false, 2));
+      } else {
+        this._global_state = JSON.parse(fs.readFileSync(path.join(userHome, '.dapple', 'config')));
+      }
+      cb();
     };
     var initLocalDb = this.initLocalDb.bind(this, workspace.package_root);
     async.waterfall([
-      initGlobalDb,
+      // initGlobalDb,
       initGlobalState,
       initLocalDb
     ], (err) => {
@@ -143,7 +141,8 @@ class State {
 
   // Returns a json object out of the global database
   getJSON(key, cb) {
-    this.globalDb.get(key, {valueEncoding: 'json'}, cb);
+    cb(null, this._global_state[key]);
+    // this.globalDb.get(key, {valueEncoding: 'json'}, cb);
   }
 
   registerModule(module) {
@@ -159,10 +158,8 @@ class State {
   }
 
   addNetwork(obj, cb) {
-    this.globalDb.get('networks', {valueEncoding: 'json'}, (err, networks) => {
-      networks[obj.name] = obj.chainenv;
-      this.globalDb.put('networks', networks, {valueEncoding: 'json'}, cb);
-    });
+    this._global_state.networks[obj.name] = obj.chainenv;
+    fs.writeFileSync(path.join(userHome, '.dapple', 'config'), JSON.stringify(this._global_state, false, 2));
   }
 
   getRemoteWeb3(type, callback) {
