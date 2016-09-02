@@ -27,7 +27,9 @@ class State {
     var initGlobalState = (cb) => {
       this._global_state = {
         networks: {},
-        state: {}
+        state: {
+          solc_path: "solc" // assume this is known
+        }
       };
       if(!fs.existsSync(path.join(userHome, '.dapple', 'config'))) {
         fs.mkdirp(path.join(userHome, '.dapple'));
