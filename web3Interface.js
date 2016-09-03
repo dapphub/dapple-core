@@ -4,7 +4,6 @@
 
 var Web3Factory = require('./web3Factory.js');
 var chain = require('dapple-chain');
-var createNewChain = require('dapple-chain/lib/createNewChain.js');
 var chain_expert = require('dapple-chain/lib/chain_expert.js');
 var levelup = require('levelup');
 var async = require('async');
@@ -50,9 +49,12 @@ class Web3Interface {
         });
       } else {
         tasks.push( (cb) => {
-          this.chainenv = chain.initNew(opts.db);
-          opts.chainenv = this.chainenv;
-          cb(null, opts);
+          chain.initNew(opts.db, [addr], (err, res) => {
+            opts.chainenv = this.chainenv = res;
+            this.chainenv.defaultAccount = addr;
+            this.chainenv.fakedOwnership.push(addr);
+            cb(null, opts);
+          });
         });
       }
 

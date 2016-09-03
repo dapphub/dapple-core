@@ -4,7 +4,6 @@ var DappleChain = require('dapple-chain');
 var chainModule = require('dapple-chain');
 var utils = require('./utils');
 var Web3 = require('web3');
-var createNewChain = require('dapple-chain/lib/createNewChain.js');
 
 module.exports = {
   JSONRPC: function (opts, cb) {

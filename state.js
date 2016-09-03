@@ -86,19 +86,10 @@ class State {
     ], (err, chainenv) => {
       if(err) throw err;
 
-      if( chainenv.type === 'internal' ) {
-        this.initChain(chainenv);
-      }
-      cb( null, this);
+        cb( null, this);
     });
   }
 
-  initChain (chainenv) {
-    this.chain = new DappleChain({
-      db: this.db,
-      chainenv
-    });
-  }
 
   exportEnvironment () {
     exporter.environment(this);
@@ -123,21 +114,18 @@ class State {
 
   // TODO - refactor this to chain?
   createChain (name) {
-    var chainenv = chain.initNew(this.db);
-    this.state.head = name;
-    this.state.pointers[name] = chainenv;
-    this.saveState(true);
+    chain.initNew(this.db, [], (err, chainenv) => {
+      this.state.head = name;
+      this.state.pointers[name] = chainenv;
+      this.saveState(true);
+    });
   }
 
   // TODO - diferentiate on chain type - refactr dhInterface
   forkLiveChain (name, type, callback) {
     var dhInterface;
-    if(!this.chain) {
-      dhInterface = new DapphubInterface();
-      dhInterface.initDb(this.db);
-    } else {
-      dhInterface = this.chain.dhInterface;
-    }
+    dhInterface = new DapphubInterface();
+    dhInterface.initDb(this.db);
     dhInterface.forkLatest(type, callback);
   }
 
