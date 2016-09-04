@@ -23,7 +23,6 @@ class State {
   }
 
   initWorkspace( workspace, callback ) {
-    var initGlobalDb = levelup.bind(this, path.join(userHome, '.dapple'));
     var initGlobalState = (cb) => {
       this._global_state = {
         networks: {},
