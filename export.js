@@ -12,13 +12,20 @@ function export_sol(paths, state, pure) {
   var signatures = _.uniq(
     _.flatten(
       _.map(envs, env =>
-        _.map(env.env, (obj, name) =>
-          `    ${obj.type} ${name};`
+        _.map(env.env, (obj, name) => {
+          var type = obj.type.indexOf('[') > -1 ?
+            obj.type.split('[')[0] : obj.type;
+          return `    ${type} ${name};`;
+        }
         )))).join('\n');
   var environment_spec =
     _.flatten(
       _.map(envs, (env, envName) =>
-        _.map( env.env, (obj, name) => `    ${envName}.${name} = ${obj.type}(${obj.value});`))).join('\n');
+        _.map( env.env, (obj, name) => {
+          var type = obj.type.indexOf('[') > -1 ?
+            obj.type.split('[')[0] : obj.type;
+            return `    ${envName}.${name} = ${type}(${obj.value});`;
+        }))).join('\n');
 
   var template = _.template(fs.readFileStringSync(__dirname + '/spec/env.sol'));
   var imports = paths.map(p => `import "${p}";`).join('\n');
