@@ -67,6 +67,9 @@ class Web3Interface {
       });
 
     } else {
+      if('chainenv' in opts) {
+        opts.web3 = opts.chainenv.network
+      }
       this._web3 = Web3Factory.JSONRPC(opts);
       var block = this._web3.eth.getBlock('latest');
       this._gas = block.gasLimit;

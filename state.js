@@ -12,6 +12,7 @@ var exporter = require('./export.js');
 var _ = require('lodash');
 var Web3 = require('web3');
 var migrate = require('./migrate.js');
+var Wallet = require('ethereumjs-wallet');
 
 class State {
   constructor(cliSpec, cb) {
@@ -24,17 +25,20 @@ class State {
 
   initWorkspace( workspace, callback ) {
     var initGlobalState = (cb) => {
-      this._global_state = {
-        networks: {},
-        state: {
-          solc_path: "solc" // assume this is known
-        }
-      };
       if(!fs.existsSync(path.join(userHome, '.dapple', 'config'))) {
+        this.wallet = Wallet.generate();
+        this._global_state = {
+          networks: {},
+          state: {
+            solc_path: "solc", // assume this is known
+            nss_account: this.wallet.getPrivateKey()
+          }
+        };
         fs.mkdirp(path.join(userHome, '.dapple'));
         fs.writeFileSync(path.join(userHome, '.dapple', 'config'), JSON.stringify(this._global_state, false, 2));
       } else {
         this._global_state = JSON.parse(fs.readFileSync(path.join(userHome, '.dapple', 'config')));
+        this.wallet = Wallet.fromPrivateKey(new Buffer(this._global_state.state.nss_account, 'hex'));
       }
       cb();
     };
@@ -70,12 +74,15 @@ class State {
     }
     var handleState = (cb, err, state) => {
       if(err && err.type === 'NotFoundError') {
-        this.createState();
+        this.createState(() => {
+          var chainenv = this.state.pointers[this.state.head];
+          cb(null, chainenv);
+        });
       } else {
         this.state = state;
+        var chainenv = this.state.pointers[this.state.head];
+        cb(null, chainenv);
       }
-      var chainenv = this.state.pointers[this.state.head];
-      cb(null, chainenv);
     }
 
     async.waterfall([
@@ -106,17 +113,18 @@ class State {
     }
   }
 
-  createState () {
+  createState (cb) {
     this.state = { pointers: {} };
-    this.createChain("master");
+    this.createChain("master", cb);
   }
 
   // TODO - refactor this to chain?
-  createChain (name) {
+  createChain (name, cb) {
     chain.initNew(this.db, [], (err, chainenv) => {
       this.state.head = name;
       this.state.pointers[name] = chainenv;
       this.saveState(true);
+      cb(null, chainenv);
     });
   }
 
