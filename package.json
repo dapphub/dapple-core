@@ -1,6 +1,6 @@
 {
   "name": "dapple-core",
-  "version": "0.1.10",
+  "version": "0.1.11",
   "description": "dapple core",
   "main": "main.js",
   "scripts": {
@@ -15,7 +15,7 @@
   "dependencies": {
     "async": "^2.0.1",
     "cli-color-tty": "^2.0.0",
-    "dapple-chain": "0.0.14",
+    "dapple-chain": "0.0.15",
     "deasync": "^0.1.7",
     "fs-extra": "^0.30.0",
     "inquirer": "^1.1.2",
