@@ -41,10 +41,13 @@ module.exports = {
 
   getHelp: function (dappledir, cliSpec, packageSpec) {
     var build = '';
-    if (fs.existsSync(dappledir + '/../.git/HEAD')) {
+    try {
+    if (fs.existsSync(dappledir + '/../.git') && fs.existsSync(dappledir + '/../.git/HEAD')) {
       // get the package HEAD hash to identify the version
       let ref = fs.readFileSync(dappledir + '/../.git/HEAD').toString().split(/\s/)[1];
       build = '-' + fs.readFileSync(dappledir + `/../.git/${ref}`).toString().slice(0, 10);
+    }
+    } catch (e) {
     }
     // apend the charactar `char` to a given string to match the desired length `number`
     const appendChar = (str, char, number) => {
