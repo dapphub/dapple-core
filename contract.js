@@ -40,10 +40,18 @@ class Contract {
     this.signatures_to_fabi = {};
     this.abi
     .forEach(abi => {
-      abi.decodeInputs = (data) => coder.decodeParams(abi.inputs.map(i => i.type), data).map(p => p.toString());
-      abi.decodeOutputs = (data) => coder.decodeParams(abi.outputs.map(i => i.type), data).map(p => p.toString());
-      abi.encodeOutputs = (data) => coder.encodeParams(abi.outputs.map(i => i.type), data);
-      let signature = (abi.type === 'constructor')? 'constructor' : sha3(utils.transformToFullName(abi)).slice(0,8);
+      abi.inputs && (abi.decodeInputs = (data) => coder.decodeParams(abi.inputs.map(i => i.type), data).map(p => p.toString()));
+      abi.outputs && (abi.decodeOutputs = (data) => coder.decodeParams(abi.outputs.map(i => i.type), data).map(p => p.toString()));
+      abi.outputs && (abi.encodeOutputs = (data) => coder.encodeParams(abi.outputs.map(i => i.type), data));
+      let signature;
+      switch (abi.type) {
+        case 'constructor':
+        case 'fallback':
+          signature = abi.type;
+          break;
+        default:
+          signature = sha3(utils.transformToFullName(abi)).slice(0,8);
+      }
       this.signatures_to_fabi[signature] = abi;
     });
 
