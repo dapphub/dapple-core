@@ -72,7 +72,7 @@ module.exports = {
       let toPort = _.omit(dapplerc.environments, Object.keys(networks));
 
       var tasks = _.mapValues(toPort, (env, name) => {
-        if(env.ethereum === 'internal') {
+        if(typeof env !== "object" || !("ethereum" in env) || env.ethereum === 'internal') {
           return 'internal';
         }
         var uri ={
