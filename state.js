@@ -43,7 +43,6 @@ class State {
       }
       cb();
     };
-    if(!workspace) return initGlobalState(callback);
     var initLocalDb = this.initLocalDb.bind(this, workspace.package_root);
     async.waterfall([
       // initGlobalDb,
@@ -159,6 +158,7 @@ class State {
   addNetwork(obj, cb) {
     this._global_state.networks[obj.name] = obj.chainenv;
     fs.writeFileSync(path.join(userHome, '.dapple', 'config'), JSON.stringify(this._global_state, false, 2));
+    cb();
   }
 
   getRemoteWeb3(type, callback) {

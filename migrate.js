@@ -71,6 +71,9 @@ module.exports = {
 
       let toPort = _.omit(dapplerc.environments, Object.keys(networks));
 
+      if(toPort.length > 0) {
+        console.log(`Found new environments to port: ${Object.keys(toPort)}`);
+      }
       var tasks = _.mapValues(toPort, (env, name) => {
         if(typeof env !== "object" || !("ethereum" in env) || env.ethereum === 'internal') {
           return 'internal';
@@ -87,13 +90,16 @@ module.exports = {
 
       // TODO - extend the env object with values from the global db if they exist
       async.mapValuesSeries(tasks, analyzeRemoteChain, (err, envs) => {
-
+        if (err) throw new Error(err);
         var _toAddTasks = _.map(envs, (chainenv, name) => {
-          return (cb) => { state.addNetwork({name, chainenv}, cb); }
+          return (cb) => {
+            state.addNetwork({name, chainenv}, cb); }
         });
 
-        async.series(_toAddTasks, () => {
+        async.series(_toAddTasks, (err) => {
+          if(err) throw new Error(err);
           _.assign(envs, networks);
+
           function fileExistsWithCaseSync(filepath) {
             var dir = path.dirname(filepath);
             if (dir === '/' || dir === '.') return true;
@@ -142,7 +148,7 @@ module.exports = {
           }
           if(fs.existsSync('dapple_packages')) {
             fs.renameSync('dapple_packages', '.dapple/packages');
-            console.log(clc.yellowBright('WARN:') + `You have packages installed. Note that Dapple is incompatible with pre 0.8 packages. Please mirate your subpackages!`);
+            // console.log(clc.yellowBright('WARN:') + `You have packages installed. Note that Dapple is incompatible with pre 0.8 packages. Please mirate your subpackages!`);
           }
             state.workspace.dappfile.layout.packages_directory = '.dapple/packages';
           state.saveState(true);
