@@ -24,6 +24,8 @@ class State {
   }
 
   initWorkspace( workspace, callback ) {
+    // TODO - this may be hacky. initWorkspace shouldnt be called in the first place if no workspace is found.
+    if(!workspace) return callback();
     var initGlobalState = (cb) => {
       if(!fs.existsSync(path.join(userHome, '.dapple', 'config'))) {
         this.wallet = Wallet.generate();
