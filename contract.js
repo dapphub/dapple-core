@@ -37,7 +37,7 @@ class Contract {
     this.rtcodeId = sha3(this.bin_runtime);
     this.name = name;
     this.logtr = new LogTranslator(this.abi);
-    this.signatures_to_fabi = {};
+    this.signatures_to_fabi = {"": {}};
     this.abi
     .forEach(abi => {
       abi.inputs && (abi.decodeInputs = (data) => coder.decodeParams(abi.inputs.map(i => i.type), data).map(p => p.toString()));
