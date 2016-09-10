@@ -69,13 +69,16 @@ module.exports = {
 
       let ported = _.pick(dapplerc.environments, Object.keys(networks));
 
-      let toPort = _.omit(dapplerc.environments, Object.keys(networks));
+      let toPort = dapplerc.environments && _.omit(dapplerc.environments, Object.keys(networks)) || {};
 
       if(toPort.length > 0) {
         console.log(`Found new environments to port: ${Object.keys(toPort)}`);
       }
       var tasks = _.mapValues(toPort, (env, name) => {
-        if(typeof env !== "object" || !("ethereum" in env) || env.ethereum === 'internal') {
+        if(!env ||
+          typeof env !== "object" ||
+          !("ethereum" in env) ||
+          env.ethereum === 'internal') {
           return 'internal';
         }
         var uri ={
