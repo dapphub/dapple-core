@@ -13,6 +13,7 @@ var _ = require('lodash');
 var Web3 = require('web3');
 var migrate = require('./migrate.js');
 var Wallet = require('ethereumjs-wallet');
+var semver = require('semver');
 
 class State {
   constructor(cliSpec, cb) {
@@ -106,6 +107,7 @@ class State {
     // TODO - async
     if(this.mode === 'persistent' || persistent) {
       if(this.workspace) {
+        this.workspace.dappfile.dapple_version = semver.clean(this.dapple_version);
         this.workspace.dappfile.environments =
           _.mapValues(this.state.pointers, p => ({objects: p.env||{}, type: p.type}) );
         this.workspace.writeDappfile();
