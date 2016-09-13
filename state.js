@@ -145,6 +145,10 @@ class State {
     // this.globalDb.get(key, {valueEncoding: 'json'}, cb);
   }
 
+  saveGlobalState() {
+    fs.writeFileSync(path.join(userHome, '.dapple', 'config'), JSON.stringify(this._global_state, false, 2));
+  }
+
   registerModule(module) {
     this.modules[module.name] = module;
     let prefixedCommands = module.cliSpec.commands.map(cmd => {
@@ -159,7 +163,7 @@ class State {
 
   addNetwork(obj, cb) {
     this._global_state.networks[obj.name] = obj.chainenv;
-    fs.writeFileSync(path.join(userHome, '.dapple', 'config'), JSON.stringify(this._global_state, false, 2));
+    this.saveGlobalState();
     cb();
   }
 
