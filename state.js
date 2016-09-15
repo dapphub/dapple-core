@@ -118,7 +118,7 @@ class State {
 
   createState (cb) {
     this.state = { pointers: {} };
-    this.createChain("master", cb);
+    this.createChain("develop", cb);
   }
 
   // TODO - refactor this to chain?
