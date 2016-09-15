@@ -14,6 +14,7 @@ var Web3 = require('web3');
 var migrate = require('./migrate.js');
 var Wallet = require('ethereumjs-wallet');
 var semver = require('semver');
+var initialglobalstate = require('./initialglobalstate.js');
 
 class State {
   constructor(cliSpec, cb) {
@@ -29,13 +30,8 @@ class State {
     var initGlobalState = (cb) => {
       if(!fs.existsSync(path.join(userHome, '.dapple', 'config'))) {
         this.wallet = Wallet.generate();
-        this._global_state = {
-          networks: {},
-          state: {
-            solc_path: "solc", // assume this is known
-            nss_account: this.wallet.getPrivateKey()
-          }
-        };
+        this._global_state = initialglobalstate;
+        this._global_state.state.nss_account = this.wallet.getPrivateKey()
         fs.mkdirp(path.join(userHome, '.dapple'));
         fs.writeFileSync(path.join(userHome, '.dapple', 'config'), JSON.stringify(this._global_state, false, 2));
       } else {

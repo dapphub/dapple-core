@@ -4,7 +4,7 @@
 
 var Web3Factory = require('./web3Factory.js');
 var chain = require('dapple-chain');
-var chain_expert = require('dapple-chain/lib/chain_expert.js');
+var chain_expert = require('./chain_expert.js');
 var levelup = require('levelup');
 var async = require('async');
 
@@ -297,8 +297,10 @@ class Web3Interface {
     }
   }
 
-  ensureType (type, cb) {
-    chain_expert.analyze(this._web3, (err, _type) => {
+  ensureType (chaintypes, type, cb) {
+    // TODO - here i have to inferr all chaintypes
+    //        this depends on state!!!
+    chain_expert.analyze(chaintypes, this._web3, (err, _type) => {
       if(type === _type) return cb();
       return cb(new Error(`Chain Type don't match: expected ${type} but got ${_type}`));
     });

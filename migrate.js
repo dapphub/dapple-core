@@ -1,8 +1,8 @@
 var fs = require('./file.js');
 var async = require('async');
 var inquirer = require('inquirer');
-var chain_expert = require('dapple-chain/lib/chain_expert.js');
-var newChain = require('dapple-chain/lib/newChain.js');
+var chain_expert = require('./chain_expert.js');
+var newChain = require('./newChain.js');
 var _ = require('lodash');
 var userHome = require('user-home');
 var path = require('path');
@@ -10,7 +10,7 @@ var Web3 = require('web3');
 var deasync = require('deasync');
 var clc = require('cli-color-tty')(true);
 
-function analyzeRemoteChain(uri, name, callback) {
+function analyzeRemoteChain(chaintypes, uri, name, callback) {
   var type;
   inquirer.prompt([{
     type: "confirm",
@@ -19,7 +19,7 @@ function analyzeRemoteChain(uri, name, callback) {
   }]).then((err, confirm) => {
     var web3 = new Web3(new Web3.providers.HttpProvider(`http://${uri.host}:${uri.port}`));
     return new Promise((resolve, reject) => {
-      chain_expert.analyze(web3, (err, _type) => {
+      chain_expert.analyze(chaintypes, web3, (err, _type) => {
         type = _type;
         if(err) return reject(err);
         web3.eth.getAccounts((err, accounts) => {
@@ -91,6 +91,8 @@ module.exports = {
       // Ommit migrateion of internal environments
       tasks = _.omitBy(tasks, v => v === 'internal');
 
+      var chaintypes = state._global_state.chaintypes;
+      analyzeRemoteChain = analyzeRemoteChain.bind(this, chaintypes);
       // TODO - extend the env object with values from the global db if they exist
       async.mapValuesSeries(tasks, analyzeRemoteChain, (err, envs) => {
         if (err) throw new Error(err);
