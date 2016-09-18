@@ -201,6 +201,7 @@ class Web3Interface {
   //   return result;
   // }
 
+  // TODO - turn the filter on if needed, make sure he is a singleton
   runFilter () {
     this._filter = this._web3.eth.filter('latest', (err, res) => {
       if (err) throw err;

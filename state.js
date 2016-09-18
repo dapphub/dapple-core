@@ -163,7 +163,7 @@ class State {
     cb();
   }
 
-  getRemoteWeb3(type, callback) {
+  getRemoteWeb3Interface(type, callback) {
 
     // See if the chain is online
     function pingChain(chainenv, cb) {
@@ -174,9 +174,9 @@ class State {
     function getBalance(web3, chainenv, cb) {cb(null, web3, chainenv);}
     // see if the defaultAccount is actually unlocked
     function testUnlocked(web3, chainenv, cb) {cb(null, web3, chainenv);}
-
     // go and get all chains of the desired type:
-    var filterType = chainenv => chainenv.type === type;
+    var filterType = chainenv => { return chainenv.type === type.replace(/\x00/g,'') };
+
     // build tasklist - try to find an accessable chain
     var candidates = _.filter(this.state.pointers, filterType)
     .map(chainenv => async.waterfall.bind(async, [

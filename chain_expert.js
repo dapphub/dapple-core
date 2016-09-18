@@ -1,8 +1,11 @@
 "use strict";
+var async = require('async');
+var _ = require('lodash');
 
 module.exports = {
   // add a new environment
   analyze: (chaintypes, web3, cb) => {
+    var i;
     web3.version.getNode((err, res) => {
       if(err || !res) return cb(err);
       if(res.toLowerCase().indexOf('testrpc') > -1) {
@@ -23,6 +26,8 @@ module.exports = {
             });
           } else if( block.hash === chaintypes.MORDEN.genesis) { // morden
             return cb(null, 'MORDEN');
+          } else if( (i = _.map(chaintypes, t => t.genesis).indexOf(block.hash)) > -1) { // custom, defined
+            return cb(null, Object.keys(chaintypes)[i]);
           } else { // custom
             return cb(null, 'CUSTOM', block.hash);
           }
