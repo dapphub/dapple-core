@@ -151,11 +151,11 @@ module.exports = {
               state.state.head = Object.keys(state.state.pointers)[0];
             }
           }
-          if(fs.existsSync('dapple_packages')) {
-            fs.renameSync('dapple_packages', '.dapple/packages');
-            // console.log(clc.yellowBright('WARN:') + `You have packages installed. Note that Dapple is incompatible with pre 0.8 packages. Please mirate your subpackages!`);
-          }
-            state.workspace.dappfile.layout.packages_directory = '.dapple/packages';
+          // if(fs.existsSync('dapple_packages')) {
+          //   fs.renameSync('dapple_packages', '.dapple/packages');
+          //   // console.log(clc.yellowBright('WARN:') + `You have packages installed. Note that Dapple is incompatible with pre 0.8 packages. Please mirate your subpackages!`);
+          // }
+          //   state.workspace.dappfile.layout.packages_directory = '.dapple/packages';
           state.saveState(true);
         });
       });
