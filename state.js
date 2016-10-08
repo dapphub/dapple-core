@@ -32,7 +32,7 @@ class State {
         this.wallet = Wallet.generate();
         this._global_state = initialglobalstate;
         this._global_state.state.nss_account = this.wallet.getPrivateKey()
-        fs.mkdirp(path.join(userHome, '.dapple'));
+        fs.mkdirp.sync(path.join(userHome, '.dapple'));
         fs.writeFileSync(path.join(userHome, '.dapple', 'config'), JSON.stringify(this._global_state, false, 2));
       } else {
         this._global_state = JSON.parse(fs.readFileSync(path.join(userHome, '.dapple', 'config')));
