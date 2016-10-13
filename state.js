@@ -69,6 +69,7 @@ class State {
 
     if(!fs.existsSync(path.join(package_root, '.dapple'))) {
       fs.mkdirp(path.join(package_root, '.dapple'));
+      fs.writeFileSync(path.join(package_root, '.dapple', '.gitignore'), "*");
     }
     var handleState = (cb, err, state) => {
       if(err && err.type === 'NotFoundError') {
