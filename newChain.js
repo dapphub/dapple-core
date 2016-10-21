@@ -60,7 +60,7 @@ module.exports = function(obj, state, callback) {
       } else {
         return res;
       }
-    });
+    })
   }
 
   // 1. choose chain connection/ network from known list or new
