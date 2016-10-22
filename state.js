@@ -68,7 +68,7 @@ class State {
     let localdbPath = path.join(package_root,'.dapple/chain_db');
 
     if(!fs.existsSync(path.join(package_root, '.dapple'))) {
-      fs.mkdirp(path.join(package_root, '.dapple'));
+      fs.mkdirp.sync(path.join(package_root, '.dapple'));
       fs.writeFileSync(path.join(package_root, '.dapple', '.gitignore'), "*");
     }
     var handleState = (cb, err, state) => {
