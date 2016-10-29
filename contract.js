@@ -32,9 +32,9 @@ class Contract {
     this.bytecode = classDefinition.bytecode || classDefinition.bin;
     this.asm = classDefinition.asm;
     this.opcodes = classDefinition.opcodes;
-    this.bin_runtime = classDefinition.bin_runtime;
+    this.runtimeBytecode = classDefinition.runtimeBytecode;
     this.classId = sha3(this.bytecode);
-    this.rtcodeId = sha3(this.bin_runtime);
+    this.rtcodeId = sha3(this.runtimeBytecode);
     this.name = name;
     this.logtr = new LogTranslator(this.abi);
     this.signatures_to_fabi = {"": {}};
