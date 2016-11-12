@@ -9,8 +9,8 @@ function export_sol(paths, state, pure) {
   var dtree = state.workspace.buildDappfileTree(paths.filter(p => /dappfile$/.test(p.toLowerCase())), state.state.head);
 
   // var envs = JSON.parse(JSON.stringify(state.state.pointers));
-  var envs = dtree.environments;
-  if(withEnv) envs.env = envs[state.state.head];
+  var envs = dtree.environments || {};
+  if(withEnv && state.state.head in envs) envs.env = envs[state.state.head];
   var environments_init = Object.keys(envs).map(name => `  Environment ${name};`).join('\n');
   // TODO - test here wether two objects with the same name but different types exist
 
