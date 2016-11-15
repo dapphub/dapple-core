@@ -1,14 +1,14 @@
 pragma solidity >=0.4.0;
 <%= imports %>
 
-contract DappleEnvironment {
+contract DappleEnv {
 
   struct Environment {
 <%= signatures %>
   }
 <%= environments_init %>
 
-  function DappleEnvironment() {
+  function DappleEnv() {
 <%= environment_spec %>
   }
 }
