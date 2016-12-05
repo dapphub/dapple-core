@@ -29,6 +29,7 @@ class Contract {
     if (typeof (this.abi) === 'string') {
       this.abi = JSON.parse(this.abi);
     }
+    this.abiString = JSON.stringify(this.abi);
     this.bytecode = classDefinition.bytecode || classDefinition.bin;
     this.asm = classDefinition.asm;
     this.opcodes = classDefinition.opcodes;

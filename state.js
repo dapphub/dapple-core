@@ -15,6 +15,8 @@ var migrate = require('./migrate.js');
 var Wallet = require('ethereumjs-wallet');
 var semver = require('semver');
 var initialglobalstate = require('./initialglobalstate.js');
+var gmigrate = require("./global_migration.js");
+
 
 class State {
   constructor(cliSpec, cb) {
@@ -28,14 +30,15 @@ class State {
   initWorkspace( workspace, callback ) {
     // TODO - this may be hacky. initWorkspace shouldnt be called in the first place if no workspace is found.
     var initGlobalState = (cb) => {
+      let config_path = path.join(userHome, '.dapple', 'config');
       if(!fs.existsSync(path.join(userHome, '.dapple', 'config'))) {
         this.wallet = Wallet.generate();
         this._global_state = initialglobalstate;
         this._global_state.state.nss_account = this.wallet.getPrivateKey()
         fs.mkdirp.sync(path.join(userHome, '.dapple'));
-        fs.writeFileSync(path.join(userHome, '.dapple', 'config'), JSON.stringify(this._global_state, false, 2));
+        fs.writeFileSync(config_path);
       } else {
-        this._global_state = JSON.parse(fs.readFileSync(path.join(userHome, '.dapple', 'config')));
+        this._global_state = gmigrate(JSON.parse(fs.readFileSync(config_path)), config_path, this.dapple_version);
         this.wallet = Wallet.fromPrivateKey(new Buffer(this._global_state.state.nss_account, 'hex'));
       }
       cb();
