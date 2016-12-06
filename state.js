@@ -16,6 +16,7 @@ var Wallet = require('ethereumjs-wallet');
 var semver = require('semver');
 var initialglobalstate = require('./initialglobalstate.js');
 var gmigrate = require("./global_migration.js");
+var lmigrate = require("./local_migration.js");
 
 
 class State {
@@ -51,6 +52,7 @@ class State {
     ], (err) => {
       if(err) throw new Error(err);
       this.workspace = workspace;
+      this.workspace._dappfile = lmigrate(this.workspace._dappfile, this.dapple_version, this);
       this.initEnvironments(workspace.dappfile.environments);
       callback();
     });
