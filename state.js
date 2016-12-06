@@ -52,8 +52,8 @@ class State {
     ], (err) => {
       if(err) throw new Error(err);
       this.workspace = workspace;
-      this.workspace._dappfile = lmigrate(this.workspace._dappfile, this.dapple_version, this);
       this.initEnvironments(workspace.dappfile.environments);
+      this.workspace._dappfile = lmigrate(this.workspace._dappfile, this.dapple_version, this);
       callback();
     });
   }

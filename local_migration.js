@@ -25,6 +25,11 @@ module.exports = (dappfile, dapple_version, state) => {
     });
   });
 
+  // migrate("0.8.37", "exchange chain type with BIP122 URI", () => {
+  //   
+  // });
+
+
   migrate("0.8.37", "add ./ prefix to layouts in case its missing", () => {
     dappfile.layout = _.mapValues(dappfile.layout, (path, name) => {
       if(!/\.\//.test(path)) return "./" + path;
