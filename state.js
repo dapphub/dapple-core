@@ -37,7 +37,7 @@ class State {
         this._global_state = initialglobalstate;
         this._global_state.state.nss_account = this.wallet.getPrivateKey()
         fs.mkdirp.sync(path.join(userHome, '.dapple'));
-        fs.writeFileSync(config_path);
+        fs.writeFileSync(config_path, JSON.stringify(this._global_state, false, 2));
       } else {
         this._global_state = gmigrate(JSON.parse(fs.readFileSync(config_path)), config_path, this.dapple_version);
         this.wallet = Wallet.fromPrivateKey(new Buffer(this._global_state.state.nss_account, 'hex'));
