@@ -44,7 +44,7 @@ function export_sol(paths, state, pure) {
         return _.map( env.objects, (obj, name) => {
           var type = obj.type.indexOf('[') > -1 ?
             obj.type.split('[')[0] : obj.type;
-            return `    ${prefix}${groupType != null ? '' : envName + '.'}${name} = ${type}(${obj.value});`;
+            return `    ${prefix}${groupType != null ? '' : envName + '.'}${name} = ${type}(${obj.value.toUpperCase()});`;
         })
         .concat( "subEnvs" in dtree ? _.map(dtree.subEnvs, (_dtree, pkgName) => {
           return genEnvSpec(_dtree, `${prefix.length > 0 ? prefix : envName + '.'}pkg["${pkgName}"].`, env.type);
