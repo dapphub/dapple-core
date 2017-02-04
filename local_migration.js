@@ -25,11 +25,6 @@ module.exports = (dappfile, dapple_version, state) => {
     });
   });
 
-  // migrate("0.8.37", "exchange chain type with BIP122 URI", () => {
-  //   
-  // });
-
-
   migrate("0.8.37", "add ./ prefix to layouts in case its missing", () => {
     dappfile.layout = _.mapValues(dappfile.layout, (path, name) => {
       if(!/\.\//.test(path)) return "./" + path;
@@ -37,9 +32,24 @@ module.exports = (dappfile, dapple_version, state) => {
     })
   })
 
+  // migrate("0.8.39", "change chaintypes for BIP122 URI's", () => {
+  //   const chaintypes = state._global_state.chaintypes;
+  //   Object.keys(dappfile.environments)
+  //   .forEach(name => {
+  //     let env = dappfile.environments[name];
+  //     let chainObject = chaintypes[env.type];
+  //     if(chainObject) {
+  //       let chain_id = chainObject.genesis.slice(2);
+  //       let block_hash = (chainObject.block2m && chainObject.block2m.slice(2)) || chain_id;
+  //       env.chain = `blockchain://${chain_id}/block/${block_hash}`
+  //       delete env.type
+  //       dappfile.environments[name] = env;
+  //     }
+  //   })
+  // })
+
   if (changed) {
     state.saveState(true);
-    // console.log(dappfile);
     // gstate.dapple_version = dapple_version;
     // fs.writeFileSync(path, JSON.stringify(gstate));
   }

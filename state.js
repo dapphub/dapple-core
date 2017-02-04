@@ -63,7 +63,10 @@ class State {
       if(name in this.state.pointers) {
         this.state.pointers[name].env = env.objects;
       } else {
-        this.state.pointers[name] = {env: env.objects, type: "UNKNOWN"};
+        this.state.pointers[name] = {
+          env: env.objects,
+          type: "UNKNOWN"
+        };
         console.log(`WARN: you seem to have no chain named ${name}!`);
       }
     });
@@ -111,7 +114,11 @@ class State {
       if(this.workspace) {
         this.workspace.dappfile.dapple_version = semver.clean(this.dapple_version);
         this.workspace.dappfile.environments =
-          _.mapValues(this.state.pointers, p => ({objects: p.env||{}, type: p.type}) );
+          _.mapValues(this.state.pointers, p => ({
+            objects: p.env || {},
+            type: p.type,
+            chain: p.chain || ""
+          }) );
         this.workspace.writeDappfile();
       }
       this.db.put('state', this.state, {valueEncoding: 'json'});
