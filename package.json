@@ -1,6 +1,6 @@
 {
   "name": "dapple-core",
-  "version": "0.1.35",
+  "version": "0.1.37",
   "description": "dapple core",
   "main": "main.js",
   "scripts": {
