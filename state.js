@@ -28,7 +28,7 @@ class State {
     // Setup dapple if this is the first run
   }
 
-  initWorkspace( workspace, callback ) {
+  initWorkspace( {workspace, cli}, callback ) {
     // TODO - this may be hacky. initWorkspace shouldnt be called in the first place if no workspace is found.
     var initGlobalState = (cb) => {
       let config_path = path.join(userHome, '.dapple', 'config');
@@ -53,7 +53,9 @@ class State {
       if(err) throw new Error(err);
       this.workspace = workspace;
       this.initEnvironments(workspace.dappfile.environments);
-      this.workspace._dappfile = lmigrate(this.workspace._dappfile, this.dapple_version, this);
+      if(!cli["--no-migration"]) {
+        this.workspace._dappfile = lmigrate(this.workspace._dappfile, this.dapple_version, this);
+      }
       callback();
     });
   }
